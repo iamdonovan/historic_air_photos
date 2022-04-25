@@ -1,0 +1,10 @@
+name: airphotos
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - notebook
+  - pandas
+  - openpyxl
+  - matplotlib
