@@ -3,7 +3,7 @@ import pandas as pd
 
 
 # load all sheets from the excel file as a dict
-df_dict = pd.read_excel('data/Review_ Historic Air Photos.xlsx', sheet_name=None)
+df_dict = pd.read_excel('data/Review_Historic_Air_Photos.xlsx', sheet_name=None)
 
 # remove blanks from 'publications'
 blank_pubs = df_dict['publications']['Human Key'] == ' ,  ()'
