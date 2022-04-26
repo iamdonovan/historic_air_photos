@@ -6,5 +6,7 @@ dependencies:
   - python=3.9
   - notebook
   - pandas
+  - geopandas
+  - cartopy
   - openpyxl
   - matplotlib
