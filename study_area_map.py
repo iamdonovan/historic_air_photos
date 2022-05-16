@@ -123,6 +123,13 @@ europe.coastlines(resolution='50m', linewidth=0.2)
 # europe.set_xlim(-1.78e6, 2.56e6)
 europe.set_extent([-20, 29, 35, 71])
 
+xmin, xmax, ymin, ymax = europe.get_extent()
+
+ax.plot([xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin], 'k', lw=0.5, transform=robinson)
+ax.text(xmin + 100000, ymin + 100000, 'a', fontsize=14)
+
+europe.text(0.02, 0.02, 'a', fontsize=14, transform=europe.transAxes)
+
 # add an inset for HMA
 hma = inset_axes(ax, width="100%", height="100%",
                  bbox_to_anchor=(0.9, 0.55, 0.22, 0.6),
@@ -135,6 +142,12 @@ hma.add_feature(cf.BORDERS, linewidth=0.2)
 hma.coastlines(resolution='50m', linewidth=0.2)
 hma.set_extent([70, 94, 26, 44])
 
+xmin, xmax, ymin, ymax = hma.get_extent()
+
+ax.plot([xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin], 'k', lw=0.5, transform=robinson)
+ax.text(xmin + 100000, ymin + 100000, 'b', fontsize=14)
+
+hma.text(0.02, 0.02, 'b', fontsize=14, transform=hma.transAxes)
 
 # arch_locs = study_areas['Archive Location'].unique()
 archive_count = study_areas.groupby(['Archive Location'])['geometry'].count()
