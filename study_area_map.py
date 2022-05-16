@@ -8,6 +8,7 @@ from cartopy import mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
+import matplotlib.path as mpath
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 
@@ -25,6 +26,13 @@ def get_cmap(n, name='hsv'):
     RGB color; the keyword argument name must be a standard mpl colormap name.
     """
     return plt.cm.get_cmap(name, n)
+
+#
+def curved_extent(lon_min, lon_max, lat_min, lat_max):
+    vertices = [(lon, 34) for lon in range(-26, 36, 1)] + \
+               [(lon, 82) for lon in range(36, -26, -1)]
+    boundary = mpath.Path(vertices)
+
 
 
 plt.ion()
@@ -56,7 +64,7 @@ study_areas['y'] = study_areas.to_crs("esri:54030")['geometry'].centroid.y
 robinson = ccrs.Robinson()
 
 # set the marker size for both figures
-msize = 6
+msize = 10
 
 # -------------------------------------------------------------------------------------------------------------------
 # create a map that shows the study sites plotted using an individual marker
@@ -95,16 +103,38 @@ ax.coastlines(resolution='50m', linewidth=0.2)
 ax.set_ylim(robinson.y_limits)
 ax.set_xlim(robinson.x_limits)
 
-inset = inset_axes(ax, width="100%", height="100%",
-                   bbox_to_anchor=(-0.05, -0.1, 0.26, 0.6),
-                   bbox_transform=ax.transAxes,
-                   axes_class=mpl.geoaxes.GeoAxes,
-                   axes_kwargs=dict(map_projection=robinson))
-inset.add_feature(cf.BORDERS, linewidth=0.2)
-inset.coastlines(resolution='50m', linewidth=0.2)
+# add an inset for Europe
+europe = inset_axes(ax, width="100%", height="100%",
+                    bbox_to_anchor=(-0.05, -0.1, 0.26, 0.6),
+                    bbox_transform=ax.transAxes,
+                    axes_class=mpl.geoaxes.GeoAxes,
+                    # axes_kwargs=dict(map_projection=ccrs.AlbersEqualArea(central_longitude=5, central_latitude=58)))
+                    axes_kwargs=dict(map_projection=robinson))
 
-inset.set_ylim(3.84e6, 7.48e6)
-inset.set_xlim(-1.78e6, 2.56e6)
+europe.add_feature(cf.BORDERS, linewidth=0.2)
+europe.coastlines(resolution='50m', linewidth=0.2)
+
+# vertices = [(lon, 34) for lon in range(-26, 36, 1)] + \
+#            [(lon, 82) for lon in range(36, -26, -1)]
+# boundary = mpath.Path(vertices)
+# inset.set_boundary(boundary, transform=ccrs.PlateCarree())
+# inset.set_extent([-26, 36, 34, 82], transform=ccrs.PlateCarree())
+# europe.set_ylim(3.84e6, 7.48e6)
+# europe.set_xlim(-1.78e6, 2.56e6)
+europe.set_extent([-20, 29, 35, 71])
+
+# add an inset for HMA
+hma = inset_axes(ax, width="100%", height="100%",
+                 bbox_to_anchor=(0.9, 0.55, 0.22, 0.6),
+                 bbox_transform=ax.transAxes,
+                 axes_class=mpl.geoaxes.GeoAxes,
+                 # axes_kwargs=dict(map_projection=ccrs.AlbersEqualArea(central_longitude=5, central_latitude=58)))
+                 axes_kwargs=dict(map_projection=robinson))
+
+hma.add_feature(cf.BORDERS, linewidth=0.2)
+hma.coastlines(resolution='50m', linewidth=0.2)
+hma.set_extent([70, 94, 26, 44])
+
 
 # arch_locs = study_areas['Archive Location'].unique()
 archive_count = study_areas.groupby(['Archive Location'])['geometry'].count()
@@ -133,10 +163,15 @@ for ii, arch_loc in enumerate(arch_locs):
             color=colors(ii), alpha=alpha, ms=msize)
     # ax.plot(study_areas.loc[this_ter, 'x'], study_areas.loc[this_ter, 'y'], '^', color=colors(ii), alpha=alpha, ms=12)
 
-    inset.plot(study_areas.loc[this_sat, 'x'], study_areas.loc[this_sat, 'y'], 's',
-               color=colors(ii), alpha=alpha, ms=msize)
-    inset.plot(study_areas.loc[this_aer, 'x'], study_areas.loc[this_aer, 'y'], 'o',
-               color=colors(ii), alpha=alpha, ms=msize)
+    europe.plot(study_areas.loc[this_sat, 'x'], study_areas.loc[this_sat, 'y'], 's',
+                color=colors(ii), alpha=alpha, ms=msize) #, transform=robinson)
+    europe.plot(study_areas.loc[this_aer, 'x'], study_areas.loc[this_aer, 'y'], 'o',
+                color=colors(ii), alpha=alpha, ms=msize) #, transform=robinson)
+
+    hma.plot(study_areas.loc[this_sat, 'x'], study_areas.loc[this_sat, 'y'], 's',
+             color=colors(ii), alpha=alpha, ms=msize) #, transform=robinson)
+    hma.plot(study_areas.loc[this_aer, 'x'], study_areas.loc[this_aer, 'y'], 'o',
+             color=colors(ii), alpha=alpha, ms=msize) #, transform=robinson)
 
     handles.append(mpatches.Rectangle((0, 0), 1, 1, facecolor=colors(ii), edgecolor='k', alpha=alpha))
 
@@ -151,10 +186,15 @@ ax.plot(study_areas.loc[this_aer, 'x'], study_areas.loc[this_aer, 'y'], 'o',
         color=colors(ii+1), alpha=alpha, ms=msize)
 # ax.plot(study_areas.loc[this_ter, 'x'], study_areas.loc[this_ter, 'y'], '^', color=colors(ii+1), alpha=alpha, ms=12)
 
-inset.plot(study_areas.loc[this_sat, 'x'], study_areas.loc[this_sat, 'y'], 's',
-           color=colors(ii+1), alpha=alpha, ms=msize)
-inset.plot(study_areas.loc[this_aer, 'x'], study_areas.loc[this_aer, 'y'], 'o',
-           color=colors(ii+1), alpha=alpha, ms=msize)
+europe.plot(study_areas.loc[this_sat, 'x'], study_areas.loc[this_sat, 'y'], 's',
+            color=colors(ii+1), alpha=alpha, ms=msize) #, transform=robinson)
+europe.plot(study_areas.loc[this_aer, 'x'], study_areas.loc[this_aer, 'y'], 'o',
+            color=colors(ii+1), alpha=alpha, ms=msize) #, transform=robinson)
+
+hma.plot(study_areas.loc[this_sat, 'x'], study_areas.loc[this_sat, 'y'], 's',
+         color=colors(ii+1), alpha=alpha, ms=msize)  # , transform=robinson)
+hma.plot(study_areas.loc[this_aer, 'x'], study_areas.loc[this_aer, 'y'], 'o',
+         color=colors(ii+1), alpha=alpha, ms=msize)  # , transform=robinson)
 
 handles.append(mpatches.Rectangle((0, 0), 1, 1, facecolor=colors(ii+1), edgecolor='k', alpha=alpha))
 labels = ['Satellite', 'Aerial'] + arch_locs
@@ -162,6 +202,5 @@ labels.append('other/not specified')
 
 plt.show()
 
-
-ax.legend(handles, labels, fontsize=12, loc=(-0.05, 0.42), frameon=True, framealpha=1)
+ax.legend(handles, labels, fontsize=12, loc=(-0.055, 0.65), frameon=True, framealpha=1)
 plt.savefig('archive_locations.png', dpi=300, bbox_inches='tight')
