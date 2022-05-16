@@ -27,12 +27,12 @@ def get_cmap(n, name='hsv'):
     """
     return plt.cm.get_cmap(name, n)
 
-#
-def curved_extent(lon_min, lon_max, lat_min, lat_max):
-    vertices = [(lon, 34) for lon in range(-26, 36, 1)] + \
-               [(lon, 82) for lon in range(36, -26, -1)]
-    boundary = mpath.Path(vertices)
 
+# https://stackoverflow.com/a/43505887
+def curved_extent(lon_min, lon_max, lat_min, lat_max):
+    vertices = [(lon, lat_min) for lon in range(lon_min, lon_max, 1)] + \
+               [(lon, lat_max) for lon in range(lon_max, lon_min, -1)]
+    return mpath.Path(vertices)
 
 
 plt.ion()
@@ -113,15 +113,10 @@ europe = inset_axes(ax, width="100%", height="100%",
 
 europe.add_feature(cf.BORDERS, linewidth=0.2)
 europe.coastlines(resolution='50m', linewidth=0.2)
-
-# vertices = [(lon, 34) for lon in range(-26, 36, 1)] + \
-#            [(lon, 82) for lon in range(36, -26, -1)]
-# boundary = mpath.Path(vertices)
-# inset.set_boundary(boundary, transform=ccrs.PlateCarree())
-# inset.set_extent([-26, 36, 34, 82], transform=ccrs.PlateCarree())
-# europe.set_ylim(3.84e6, 7.48e6)
-# europe.set_xlim(-1.78e6, 2.56e6)
 europe.set_extent([-20, 29, 35, 71])
+
+# boundary = curved_extent(-26, 36, 34, 82)
+# boundary.set_boundary(boundary, transform=ccrs.PlateCarree())
 
 xmin, xmax, ymin, ymax = europe.get_extent()
 
@@ -135,12 +130,15 @@ hma = inset_axes(ax, width="100%", height="100%",
                  bbox_to_anchor=(0.9, 0.55, 0.22, 0.6),
                  bbox_transform=ax.transAxes,
                  axes_class=mpl.geoaxes.GeoAxes,
-                 # axes_kwargs=dict(map_projection=ccrs.AlbersEqualArea(central_longitude=5, central_latitude=58)))
+                 # axes_kwargs=dict(map_projection=ccrs.AlbersEqualArea(central_longitude=82, central_latitude=35)))
                  axes_kwargs=dict(map_projection=robinson))
 
 hma.add_feature(cf.BORDERS, linewidth=0.2)
 hma.coastlines(resolution='50m', linewidth=0.2)
 hma.set_extent([70, 94, 26, 44])
+
+# boundary = curved_extent(70, 94, 26, 44)
+# hma.set_boundary(boundary, transform=ccrs.PlateCarree())
 
 xmin, xmax, ymin, ymax = hma.get_extent()
 
