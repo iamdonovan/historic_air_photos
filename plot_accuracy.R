@@ -61,9 +61,11 @@ myData_Aerial <-myData[!(myData$Data.Type=="Satellite" | myData$Data.Type=="Terr
 # SATELLITE #
 # 1.Residuals to comparison, ordered ascending, colored by use of fiducials 
 myData_Satellite <- myData_Satellite[order(myData_Satellite$Residuals.to.comparison..m..avg),] #reorder
-plt_sat_fid_resid <- ggplot(myData_Satellite, aes(x=1:nrow(myData_Satellite), y=Residuals.to.comparison..m..avg, colour=Fiducial.Marks), na.rm = TRUE, size=2) +
-  geom_point()  +  xlim(0,51) + ylim(0,20) + 
-  labs(title="Hist. Satellite Images",x ="ID", y = "Residuals to comparison data [m]") + 
+plt_sat_fid_resid <- ggplot(myData_Satellite, aes(x=1:nrow(myData_Satellite), y=Residuals.to.comparison..m..avg, colour=Fiducial.Marks, shape=Comparison.source.group), na.rm = TRUE, size=2) +
+  geom_point()  +  xlim(0,51) + ylim(-15,30) + 
+  geom_errorbar(aes(ymin=Residuals.to.comparison..m..avg - Accurcy.comparison..m..avg, ymax=Residuals.to.comparison..m..avg + Accurcy.comparison..m..avg), width=.2,
+                position=position_dodge(.9)) + 
+  labs(title="Hist. Satellite Images",x ="ID", y = "Residuals to comparison data [m]", shape = "Comparison Src", colour = "Fiducials?") + 
   theme(plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 20))
 
 png(paste(wd_path, "Rplot_Sat_ResidComp_Fiducials.png"), units="in", width=10, height=5, res=300) #print
@@ -157,9 +159,11 @@ dev.off()
 # AERIAL # 
 # 1. Residuals to comparision, ordered ascending, colored by use of fiducials 
 myData_Aerial <- myData_Aerial[order(myData_Aerial$Residuals.to.comparison..m..avg),] #reorder
-plt_aerial_fid_resid <- ggplot(myData_Aerial, aes(x=1:nrow(myData_Aerial), y=Residuals.to.comparison..m..avg, colour=Fiducial.Marks), na.rm = TRUE, size=2) +
-  geom_point()  +  xlim(0,125) + ylim(0,20) +
-  labs(title="Hist. Aerial Images",x ="ID", y = "Residuals to comparison data [m]") +
+plt_aerial_fid_resid <- ggplot(myData_Aerial, aes(x=1:nrow(myData_Aerial), y=Residuals.to.comparison..m..avg, shape=Comparison.source.group, colour=Fiducial.Marks ) , na.rm = TRUE) +
+  geom_point()  +  xlim(0,125) + ylim(-15,30) +
+  geom_errorbar(aes(ymin=Residuals.to.comparison..m..avg - Accurcy.comparison..m..avg, ymax=Residuals.to.comparison..m..avg + Accurcy.comparison..m..avg), width=.2,
+                position=position_dodge(.9)) +
+  labs(title="Hist. Aerial Images",x ="ID", y = "Residuals to comparison data [m]", shape = "Comparison Src", colour = "Fiducials?") +
   theme(plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 20))
 
 png(paste(wd_path, "Rplot_Aerial_ResidComp_Fiducials.png"), units="in", width=10, height=5, res=300) #print
@@ -255,7 +259,17 @@ gcp_data <- data.frame("GCP source" = gcp_source, "GCP accuracy (avg) [m]" = gcp
 gcp_data<-subset(gcp_data, data_type!="Terrestrial" & data_type!="Mix") #drop Terrestrial & Mix
 gcp_data<-subset(gcp_data, !is.na(gcp_data$GCP.accuracy..avg...m.) & !is.na(gcp_data$GCP.source)) # drop NA, makes no sense to print this information
 
+
 gcp_data <- gcp_data[order(gcp_data$GCP.source),] # sort dataset by accuracy
+
+
+
+print(paste("Number of area-based GCP sources in 'aerial':" , length(which(gcp_data$GCP.source=='area-based' & gcp_data$Data.Type=='Aerial'))))
+print(paste("Number of point-based GCP sources in 'aerial':" , length(which(gcp_data$GCP.source=='point-based' & gcp_data$Data.Type=='Aerial'))))
+print(paste("Number of area-based GCP sources in 'satellite':" , length(which(gcp_data$GCP.source=='area-based' & gcp_data$Data.Type=='Satellite'))))
+print(paste("Number of point-based GCP sources in 'satellite':" , length(which(gcp_data$GCP.source=='point-based' & gcp_data$Data.Type=='Satellite'))))
+
+
 
 # Histogram: Source Ground Control Information
 plt_gcp_bar_src_dt <- ggplot(gcp_data, aes(x=GCP.source, fill=Data.Type), na.rm = TRUE) + 
@@ -293,19 +307,44 @@ comp_source <- myData$Comparison.data.simplified
 comp_source <- as.character(comp_source)
 comp_source[comp_source == "?"] <- NA # remove some creepy stuff like "?" -> to NA
 # make things a bit easier and simplify the tags a bit more #20.5.22
-comp_source[comp_source == "GCP"] <- "GCPs, CPs" # remove some creepy stuff like "?" -> to NA
-comp_source[comp_source == "GCPs"] <- "GCPs, CPs" # remove some creepy stuff like "?" -> to NA
-comp_source[comp_source == "CPs"] <- "GCPs, CPs" # remove some creepy stuff like "?" -> to NA
+comp_source[comp_source == "GCP"] <- "GCPs" # remove some creepy stuff like "?" -> to NA
+comp_source[comp_source == "GCPs"] <- "GCPs" # remove some creepy stuff like "?" -> to NA
+comp_source[comp_source == "CPs"] <- "CPs" # remove some creepy stuff like "?" -> to NA
 
-
+# more unique
+comp_source[comp_source == "ALS-DEM, TLS"] <- "DEM"
+comp_source[comp_source == "ALS-DEM"] <- "DEM"
+comp_source[comp_source == "ICESat"] <- "Altimetry"
+comp_source[comp_source == "ICESat, ALS-DEM"] <- "diverse"
+comp_source[comp_source == "Imgs, ALS-DEM"] <- "DEM"
+comp_source[comp_source == "Imgs, SRTM, ICESat"] <- "diverse"
+comp_source[comp_source == "StereoDEM"] <- "DEM"
+comp_source[comp_source == "TLS"] <- "DEM"
 
 comp_source <- factor(comp_source)
 comp_accuracy_avg <- myData$Accurcy.comparison..m..avg
 data_type <- myData$Data.Type
+comp_source_group <- myData$Comparison.source.group
 
-comp_data <- data.frame(comp_source, comp_accuracy_avg, data_type)
+comp_data <- data.frame(comp_source, comp_accuracy_avg, data_type, comp_source_group)
 comp_data <- comp_data[order(comp_data$comp_accuracy_avg),] #reorder by acc
 comp_data_noNA <- subset(comp_data,!is.na(comp_accuracy_avg)) # drop all rows that contain no accuracy information!
+comp_data_noNA <- subset(comp_data_noNA, (comp_source_group == 'area-based' | comp_source_group == 'point-based' )) # drop all rows that contain no accuracy information!
+
+plt_compData_src_acc <- ggplot(comp_data_noNA, aes(x = comp_accuracy_avg, y=reorder(comp_source_group,comp_accuracy_avg)), na.rm = TRUE) + 
+  #geom_line(aes(colour = comp_source), na.rm = TRUE) + 
+  #geom_point(size=2, aes(colour=comp_source), na.rm = TRUE) +
+  geom_line(na.rm = TRUE) + #no color
+  geom_point(size=2, na.rm = TRUE, aes(colour = comp_source)) + #no color
+  scale_x_continuous(trans="log10",breaks = c(0, 0.25, 0.5,1,2,4,6,8,10,25), labels = c(0, "<0.25", 0.5, 1,2,4,6,8,10,25)) +
+  labs(title="Accuracy/Source of Comparison Information", x ="Accuracy [m]", y="Source", colour = "Source") +
+  theme(plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 15))
+
+png(paste(wd_path, "Rplot_acc_src_comp_A.png"), units="in", width=10, height=3, res=300) #print
+# insert ggplot code
+plot(plt_compData_src_acc)
+dev.off()
+
 
 plt_compData_src_acc <- ggplot(comp_data_noNA, aes(x = comp_accuracy_avg, y=reorder(comp_source,comp_accuracy_avg)), na.rm = TRUE) + 
   #geom_line(aes(colour = comp_source), na.rm = TRUE) + 
@@ -316,7 +355,7 @@ plt_compData_src_acc <- ggplot(comp_data_noNA, aes(x = comp_accuracy_avg, y=reor
   labs(title="Accuracy/Source of Comparison Information", x ="Accuracy [m]", y="Source", colour = "Source") +
   theme(plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 15))
 
-png(paste(wd_path, "Rplot_acc_src_comp.png"), units="in", width=10, height=5, res=300) #print
+png(paste(wd_path, "Rplot_acc_src_comp_B.png"), units="in", width=10, height=3, res=300) #print
 # insert ggplot code
 plot(plt_compData_src_acc)
 dev.off()
