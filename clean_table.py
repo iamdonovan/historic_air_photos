@@ -35,7 +35,7 @@ df_dict['publications'].drop(['interesting?', '.not_relevant', 'geographic', 'sc
                              axis=1, inplace=True)
 
 # drop the .relevant column from the geographic table
-df_dict['geographic'].drop(['.relevant'], axis=1, inplace=True)
+df_dict['geographic'].drop(['.not_relevant'], axis=1, inplace=True)
 
 # drop the helper columns from the datasets table
 df_dict['datasets'].drop(['processing', 'outputs', 'accuracy'], axis=1, inplace=True)

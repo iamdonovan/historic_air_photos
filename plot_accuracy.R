@@ -25,8 +25,8 @@ inch_converting =  2.54
 
 
 
-wd_path <- "D:/TUD/ReviewPaper/"
-reviewSheet <- "D:/TUD/ReviewPaper/Review_Historic_Air_Photos.csv"
+wd_path <- "D:/TUD/ReviewPaper/historic_air_photos/figures/"
+reviewSheet <- "D:/TUD/ReviewPaper/historic_air_photos/data/Review_Historic_Air_Photos.csv"
 
 # more colors needed? do this: https://www.datanovia.com/en/blog/easy-way-to-expand-color-palettes-in-r/
 # Define the number of colors you want
@@ -59,7 +59,7 @@ myData_Aerial <-myData[!(myData$Data.Type=="Satellite" | myData$Data.Type=="Terr
 
 
 # SATELLITE #
-# 1.Residuals to comparision, ordered ascending, colored by use of fiducials 
+# 1.Residuals to comparison, ordered ascending, colored by use of fiducials 
 myData_Satellite <- myData_Satellite[order(myData_Satellite$Residuals.to.comparison..m..avg),] #reorder
 plt_sat_fid_resid <- ggplot(myData_Satellite, aes(x=1:nrow(myData_Satellite), y=Residuals.to.comparison..m..avg, colour=Fiducial.Marks), na.rm = TRUE, size=2) +
   geom_point()  +  xlim(0,51) + ylim(0,20) + 
