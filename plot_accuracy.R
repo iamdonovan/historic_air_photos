@@ -25,7 +25,7 @@ inch_converting =  2.54
 
 
 
-wd_path <- "D:/TUD/ReviewPaper/historic_air_photos/figures/"
+wd_path <- "D:/TUD/ReviewPaper/historic_air_photos/figures/acc/"
 reviewSheet <- "D:/TUD/ReviewPaper/historic_air_photos/data/Review_Historic_Air_Photos.csv"
 
 # more colors needed? do this: https://www.datanovia.com/en/blog/easy-way-to-expand-color-palettes-in-r/
