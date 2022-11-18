@@ -11,10 +11,8 @@ def _coords(row):
 
 df_dict = pd.read_excel('Review_ Historic Air Photos.xlsx', sheet_name=None)
 
-
-
-dict_keys(['publications', 'geographic', 'scientific', 'datasets', 'processing', 'accuracy', 'outputs'])
-
+# dict_keys(['publications', 'geographic', 'scientific', 'datasets',
+# 'processing', 'accuracy', 'outputs'])
 
 pubs = pd.read_excel('data/Review_ Historic Air Photos.xlsx', sheet_name='publications')
 geog = pd.read_excel('data/Review_ Historic Air Photos.xlsx', sheet_name='geographic')
