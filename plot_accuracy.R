@@ -21,7 +21,8 @@ text_size = 9
 line_thickness = 0.25
 inch_converting =  2.54
 
-
+# TODO: script needs to be cleaned up! 
+# split into individual scripts (one per figure / group)
 
 
 
@@ -38,12 +39,6 @@ reviewSheet <- "D:/TUD/ReviewPaper/historic_air_photos/data/Review_Historic_Air_
 
 
 myData = read.csv(file = reviewSheet, header = TRUE, sep = "," ,na.strings=c("","NA"))
-class(myData$DEM.resolution..m.) = "Numeric"
-class(myData$Orthophoto.resolution..m.) = "Numeric"
-class(myData$Residuals.to.comparison..m..avg) = "Numeric"
-class(myData$Residuals.to.CPs..m..avg) = "Numeric"
-class(myData$Residuals.to.GCPs..m..avg) = "Numeric"
-
 myData$Fiducial.Marks[is.na(myData$Fiducial.Marks)] <- "not specified"
 myData$Fiducial.Marks <- factor(myData$Fiducial.Marks)
 
@@ -54,197 +49,6 @@ myData_Satellite <-myData[!(myData$Data.Type=="Aerial" | myData$Data.Type=="Terr
 myData_Aerial <-myData[!(myData$Data.Type=="Satellite" | myData$Data.Type=="Terrestrial" | myData$Data.Type=="Mix" ),]
 
 
-
-
-
-
-# SATELLITE #
-# 1.Residuals to comparison, ordered ascending, colored by use of fiducials 
-myData_Satellite <- myData_Satellite[order(myData_Satellite$Residuals.to.comparison..m..avg),] #reorder
-plt_sat_fid_resid <- ggplot(myData_Satellite, aes(x=1:nrow(myData_Satellite), y=Residuals.to.comparison..m..avg, colour=Fiducial.Marks, shape=Comparison.source.group), na.rm = TRUE, size=2) +
-  geom_point()  +  xlim(0,51) + ylim(-15,30) + 
-  geom_errorbar(aes(ymin=Residuals.to.comparison..m..avg - Accurcy.comparison..m..avg, ymax=Residuals.to.comparison..m..avg + Accurcy.comparison..m..avg), width=.2,
-                position=position_dodge(.9)) + 
-  labs(title="Hist. Satellite Images",x ="ID", y = "Residuals to comparison data [m]", shape = "Comparison Src", colour = "Fiducials?") + 
-  theme(plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 20))
-
-png(paste(wd_path, "Rplot_Sat_ResidComp_Fiducials.png"), units="in", width=10, height=5, res=300) #print
-plot(plt_sat_fid_resid)
-dev.off()
-
-print(paste("Number of Vals used in 'Rplot_Sat_ResidComp_Fiducials.png':" , sum(!is.na(myData_Satellite$Residuals.to.comparison..m..avg))))
-
-# ---------------------------------
-
-# 2. Fiducials usage in percentage
-# perc number of Not specitifed / no / yes for satellite imagery
-perc_sat_fiduc_no = 100 * sum(myData_Satellite$Fiducial.Marks == "no") / length(myData_Satellite$Fiducial.Marks)
-perc_sat_fiduc_yes = 100 * sum(myData_Satellite$Fiducial.Marks == "yes") / length(myData_Satellite$Fiducial.Marks)
-perc_sat_fiduc_na = 100 * sum(myData_Satellite$Fiducial.Marks == "not specified") / length(myData_Satellite$Fiducial.Marks)
-
-# create pie chart - Ficducials usage in percentage
-# Create Data
-perc_fiduc_labels <- c("no", "yes", "not specified")
-perc_sat_fiduc_vals <- c(perc_sat_fiduc_no, perc_sat_fiduc_yes, perc_sat_fiduc_na)
-
-# create data frame
-perc_fiduc_sat_data <- data.frame(perc_fiduc_labels, perc_sat_fiduc_vals)
-
-# Compute the position of labels
-perc_fiduc_sat_data <- perc_fiduc_sat_data %>% 
-  arrange(desc(perc_fiduc_labels)) %>%
-  mutate(prop = perc_sat_fiduc_vals / sum(perc_fiduc_sat_data$perc_sat_fiduc_vals) *100) %>%
-  mutate(ypos = cumsum(prop)- 0.5*prop )
-
-# Basic piechart
-plt_sat_fid <- ggplot(perc_fiduc_sat_data, aes(x="", y=prop, fill=perc_fiduc_labels)) +
-  geom_bar(stat="identity", width=1, color="white") +
-  coord_polar("y", start=0) +
-  #theme_void() + 
-  theme(legend.position="none", plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 20)) +
-  geom_text(aes(y = ypos, label = perc_fiduc_labels), color = "white", size=4) +
-  labs(title="Usage of Fiducials (Hist. Satellite Images)", x ="", y="")
-
-png(paste(wd_path, "Rplot_Sat_Usage_Fiducials.png"), units="in", width=10, height=5, res=300) #print
-plot(plt_sat_fid)
-dev.off()
-
-# ---------------------------------
-
-
-
-# 3. DEM Resolution / Orthophoto Resolution, Ordered Ascending
-myData_Satellite <- myData_Satellite[order(myData_Satellite$DEM.resolution..m., myData_Satellite$Orthophoto.resolution..m.),] #reorder by DEM and Ortho res
-
-# Scatter plot + Histogram on DEM/Ortho resolution
-# create own df for this and melt variables to enable color separation
-sat_res_data_DEM <- myData_Satellite$DEM.resolution..m
-sat_res_data_Ortho <- myData_Satellite$Orthophoto.resolution..m.
-sat_res_data_key <- 1:nrow(myData_Satellite)
-sat_res_data <- data.frame('id' = sat_res_data_key, "DEM" = sat_res_data_DEM,  "Orthophoto" = sat_res_data_Ortho)
-
-sat_res_data_mm <- melt(sat_res_data, id = 'id')
-sat_res_data_mm$value=as.numeric(sat_res_data_mm$value) #important that col contains unique vals
-
-# Scatter plot
-plt_sat_out_res <- ggplot(sat_res_data_mm, aes(x=id) , na.rm = TRUE) + 
-  geom_point(aes(y=value, color=variable), na.rm = TRUE) + xlim(0,80) + ylim(0,60) + 
-  labs(title="Hist. Satellite images: Output resolution [m]",x ="ID", y = "Output resolution [m]", color = "Output")  + 
-  theme(plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 20))
-
-png(paste(wd_path, "Rplot_Sat_Output_Resolution.png"), units="in", width=10, height=5, res=300) #print
-plot(plt_sat_out_res)
-dev.off()
-
-# Histogram
-plt_sat_out_res_hist <- ggplot(sat_res_data_mm, aes(x=value, fill=variable)) + 
-  geom_histogram(position="identity", bins=20, na.rm = TRUE, alpha = 0.75) + 
-  xlim(0,80) + ylim(0,110) +
-  labs(title = "Histogram: Hist. Satellite Images: Output resolution [m]", x ="Resolution [m]", y="Count", fill = "Output") + 
-  theme(plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 20))
-
-png(paste(wd_path, "Rplot_Sat_Output_Resolution_Histo.png"), units="in", width=10, height=5, res=300) #print
-plot(plt_sat_out_res_hist)
-dev.off()
-
-
-
-
-
-
-
-
-
-
-# AERIAL # 
-# 1. Residuals to comparision, ordered ascending, colored by use of fiducials 
-myData_Aerial <- myData_Aerial[order(myData_Aerial$Residuals.to.comparison..m..avg),] #reorder
-plt_aerial_fid_resid <- ggplot(myData_Aerial, aes(x=1:nrow(myData_Aerial), y=Residuals.to.comparison..m..avg, shape=Comparison.source.group, colour=Fiducial.Marks ) , na.rm = TRUE) +
-  geom_point()  +  xlim(0,125) + ylim(-15,30) +
-  geom_errorbar(aes(ymin=Residuals.to.comparison..m..avg - Accurcy.comparison..m..avg, ymax=Residuals.to.comparison..m..avg + Accurcy.comparison..m..avg), width=.2,
-                position=position_dodge(.9)) +
-  labs(title="Hist. Aerial Images",x ="ID", y = "Residuals to comparison data [m]", shape = "Comparison Src", colour = "Fiducials?") +
-  theme(plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 20))
-
-png(paste(wd_path, "Rplot_Aerial_ResidComp_Fiducials.png"), units="in", width=10, height=5, res=300) #print
-plot(plt_aerial_fid_resid)
-dev.off()
-
-print(paste("Number of Vals used in 'Rplot_Aerial_ResidComp_Fiducials.png':" , sum(!is.na(myData_Aerial$Residuals.to.comparison..m..avg))))
-
-
-
-# ---------------------------------
-
-# 2. Fiducials usage in percentage
-# perc number of Not specitifed / no / yes for satellite imagery
-perc_aerial_fiduc_no = 100 * sum(myData_Aerial$Fiducial.Marks == "no") / length(myData_Aerial$Fiducial.Marks)
-perc_aerial_fiduc_yes = 100 * sum(myData_Aerial$Fiducial.Marks == "yes") / length(myData_Aerial$Fiducial.Marks)
-perc_aerial_fiduc_na = 100 * sum(myData_Aerial$Fiducial.Marks == "not specified") / length(myData_Aerial$Fiducial.Marks)
- 
-# create pie chart - Ficducials usage in percentage
-# Create Data
-perc_fiduc_labels <- c("no", "yes", "not specified")
-perc_aerial_fiduc_vals <- c(perc_aerial_fiduc_no, perc_aerial_fiduc_yes, perc_aerial_fiduc_na)
-
-# create data frame
-perc_fiduc_aerial_data <- data.frame(perc_fiduc_labels, perc_aerial_fiduc_vals)
-
-# Compute the position of labels
-perc_fiduc_aerial_data <- perc_fiduc_aerial_data %>% 
-  arrange(desc(perc_fiduc_labels)) %>%
-  mutate(prop = perc_aerial_fiduc_vals / sum(perc_fiduc_aerial_data$perc_aerial_fiduc_vals) *100) %>%
-  mutate(ypos = cumsum(prop)- 0.5*prop )
-
-# Basic piechart
-plt_aerial_fid <- ggplot(perc_fiduc_aerial_data, aes(x="", y=prop, fill=perc_fiduc_labels)) +
-  geom_bar(stat="identity", width=1, color="white") +
-  coord_polar("y", start=0) +
-  #theme_void() + 
-  theme(legend.position="none", plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 20)) +
-  geom_text(aes(y = ypos, label = perc_fiduc_labels), color = "white", size=4) +
-  labs(title="Usage of Fiducials (Hist. Aerial images)", x ="", y="")
-
-png(paste(wd_path, "Rplot_Aerial_Usage_Fiducials.png"), units="in", width=10, height=5, res=300) #print
-plot(plt_aerial_fid)
-dev.off()
-
-# ---------------------------------
-
-
-
-# 3. DEM Resolution / Orthophoto Resolution, Ordered Ascending
-myData_Aerial <- myData_Aerial[order(myData_Aerial$DEM.resolution..m., myData_Aerial$Orthophoto.resolution..m.),] #reorder by DEM and Ortho res
-
-# Scatterplot + Histogram on DEM/Ortho resolution
-# create own df for this and melt variables to enable color seperation
-aerial_res_data_DEM <- myData_Aerial$DEM.resolution..m
-aerial_res_data_Ortho <- myData_Aerial$Orthophoto.resolution..m.
-aerial_res_data_key <- 1:nrow(myData_Aerial)
-aerial_res_data <- data.frame('id' = aerial_res_data_key, 'DEM' = aerial_res_data_DEM, 'Orthophoto' = aerial_res_data_Ortho)
-aerial_res_data_mm <- melt(aerial_res_data, id = 'id')
-
-aerial_res_data_mm$value=as.numeric(aerial_res_data_mm$value) #important that col contains unique vals
-
-
-# Scatter plot
-plt_aerial_out_res <- ggplot(aerial_res_data_mm, aes(x=id)) + 
-  geom_point(aes(y=value, color=variable), na.rm = TRUE)+ xlim(0,250) + ylim(0,60) + 
-  labs(title="Hist. Aerial images: Output resolution [m]",x ="ID", y = "Output resolution [m]", color = "Output")  + 
-  theme(plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 20))
-
-png(paste(wd_path, "Rplot_Aerial_Output_Resolution.png"), units="in", width=10, height=5, res=300) #print
-plot(plt_aerial_out_res)
-dev.off()
-
-# Histogram
-plt_aerial_out_res_hist <- ggplot(aerial_res_data_mm, aes(x=value, fill=variable)) + geom_histogram(position="identity", bins=20, na.rm = TRUE, alpha = 0.75) +
-  labs(title = "Histogram: Hist. Aerial Images: Output resolution [m]", x ="Resolution [m]", y="Count", fill = "Output") + ylim(0,110) +
-  theme(plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 20))
-
-png(paste(wd_path, "Rplot_Aerial_Output_Resolution_Histo.png"), units="in", width=10, height=5, res=300) #print
-plot(plt_aerial_out_res_hist)
-dev.off()
 
 # 4. Groundcontrol data: type and when used? aerial / satellite
 # prep data
@@ -257,6 +61,7 @@ gcp_accuracy_avg <- myData$Ground.control.accuraxy..m..avg
 data_type <- myData$Data.Type
 gcp_data <- data.frame("GCP source" = gcp_source, "GCP accuracy (avg) [m]" = gcp_accuracy_avg, "Data Type" = data_type)
 gcp_data<-subset(gcp_data, data_type!="Terrestrial" & data_type!="Mix") #drop Terrestrial & Mix
+
 gcp_data<-subset(gcp_data, !is.na(gcp_data$GCP.accuracy..avg...m.) & !is.na(gcp_data$GCP.source)) # drop NA, makes no sense to print this information
 
 
@@ -280,8 +85,10 @@ plt_gcp_bar_src_dt <- ggplot(gcp_data, aes(x=GCP.source, fill=Data.Type), na.rm 
 print(paste("Number of Datasets used in 'Rplot_source_groundcontrol.png':" , nrow(gcp_data)))
 
 plt_gcp_hist_acc_src <- ggplot(gcp_data, aes(x=GCP.accuracy..avg...m., fill = GCP.source), na.rm = TRUE) + 
-  geom_histogram(position="identity", bins = 20, alpha = 0.75) +
+  geom_histogram(position="dodge", binwidth = 2, alpha = 0.75, boundary = 0, color = "gray") +
   #xlim(0,100) + ylim(0,20) +
+  scale_y_continuous(limits=c(0,60), breaks = seq(0, 60, by = 15))+
+  scale_x_continuous(limits=c(0,20), breaks = seq(0, 20, by = 2))+
   labs( x ="Accuracy [m]", y="Count", fill = "GCP Source:") + #title="Accuracy of Ground Control Information",
   theme(plot.title = element_text(color="black", hjust=0.5), text = element_text(size = 20), legend.position="top", 
         legend.text = element_text(size=14), title = element_text(size=14, face = 'bold'))
@@ -293,8 +100,8 @@ plt_gcp_bar_hist_src_acc <- annotate_figure(plt_gcp_bar_hist_src_acc, top = text
 plt_gcp_bar_hist_src_acc <- annotate_figure(plt_gcp_bar_hist_src_acc, bottom = text_grob(paste("Considered datasets:", nrow(gcp_data), "(no NA)" ), color = "black", size = 14))
 plt_gcp_bar_hist_src_acc
 
-png(paste(wd_path, "Rplot_src_acc_gc.png"), units="in", width=10, height=5, res=300) #print
-plot(plt_gcp_bar_hist_src_acc)
+png(paste(wd_path, "Rplot_src_acc_gc.png"), units="in", width=8, height=5, res=300) #print
+plot(plt_gcp_hist_acc_src) # changed! print only left side
 dev.off()
 
 
