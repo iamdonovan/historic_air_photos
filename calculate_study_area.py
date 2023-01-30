@@ -46,6 +46,7 @@ df_dict['geographic']['Pub Key'] = df_dict['geographic']['Publication Key'].str.
 
 # get the geographic table from the dictionary
 df_geo = df_dict['geographic']
+df_geo.dropna(subset=['lat_min'], inplace=True)
 
 # calculate the area for each polygon in the table
 df_geo['area'] = [calculate_area(row) for ii, row in df_geo.iterrows()]
@@ -59,4 +60,4 @@ summed_area = df_geo.groupby(['Pub Key'])['area'].sum()
 summed_area[summed_area == 0] = np.nan
 
 # write the results to a csv
-summed_area.to_csv('StudyAreaSize.csv')
+summed_area.to_csv('data/StudyAreaSize.csv')
